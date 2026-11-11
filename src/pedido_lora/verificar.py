@@ -31,7 +31,11 @@ URL = "https://api.groq.com/openai/v1/chat/completions"
 #   só regras: 7/12 detectados, 0/19 rótulos bons rejeitados
 #   gpt-oss-120b, raciocínio low: 12/12 e 0/19, mas disputa cota com o gerador
 #   qwen3.8-27b, sem raciocínio, listando só os rejeitados: 12/12 e 0/19,
-#   rápido e com cota própria (o gerador usa o gpt-oss-120b)
+#   rápido e com cota própria (o gerador usa o gpt-oss-120b), mas limite de
+#   200 mil tokens por dia na conta gratuita
+#   gpt-oss-120b, raciocínio low, listando só os rejeitados: 12/12 e 0/19
+#   gpt-oss-20b, raciocínio low: 10/12 e 1/19 (descartado)
+# Para trocar: MODELO_VERIFICADOR=openai/gpt-oss-120b ESFORCO_VERIFICADOR=low
 MODELO_VERIFICADOR = os.environ.get("MODELO_VERIFICADOR", "qwen/qwen3.8-27b")
 ESFORCO_VERIFICADOR = os.environ.get("ESFORCO_VERIFICADOR", "none")
 

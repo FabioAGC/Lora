@@ -98,6 +98,10 @@ def main() -> None:
     ap.add_argument("--manter-cache", action="store_true")
     args = ap.parse_args()
 
+    if not Path("data/chat/treino.jsonl").exists():
+        raise SystemExit("O dataset ainda não foi montado (falta data/chat/treino.jsonl). "
+                         "Rode ./scripts/montar_dataset_v2.sh antes de treinar.")
+
     receitas = [RECEITAS[m] for m in args.modelos]
     print("Plano (estimativa para uma T4):")
     for r in receitas:
