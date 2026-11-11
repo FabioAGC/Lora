@@ -6,7 +6,7 @@ Um modelo de linguagem pequeno (Qwen2.5 0.5B) ajustado **em CPU** para transform
 mensagens informais de delivery, em português, em pedidos estruturados:
 
 ```
-"me ve 2 xburguer sem cebola e uma coquinha zero, pago no pix"
+"me ve 2 xburguer sem cebola e uma coca zero lata, pago no pix"
 → {"itens":[{"item":"x-burguer","qtd":2,"obs":["sem cebola"]},
             {"item":"coca-cola zero lata","qtd":1,"obs":[]}],
    "pagamento":"pix","tipo":null,"orcamento":null,"troco_para":null}
@@ -57,7 +57,9 @@ O tempo dos modelos locais é em 4 núcleos de CPU; o do LLM grande é a latênc
 ### Limitações
 
 - O dataset é sintético e as mensagens seguem de perto os nomes do catálogo. Mensagens
-  reais são mais variadas, e o desempenho nelas deve ser menor.
+  reais são mais variadas, e o desempenho nelas deve ser menor. Um exemplo testado à mão:
+  "uma coquinha zero" vira um item inexistente, e "passo aí pra pegar" não é reconhecido
+  como retirada, porque essas formas não aparecem no treino.
 - Há ruído nos rótulos: em alguns exemplos o LLM gerador mencionou algo que não estava
   no pedido sorteado (por exemplo, "entrega"). Isso limita o teto de todos os modelos,
   inclusive o do LLM grande.

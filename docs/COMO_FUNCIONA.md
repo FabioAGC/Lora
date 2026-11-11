@@ -29,7 +29,7 @@ Aqui a ordem é invertida:
 ```mermaid
 flowchart LR
     S["Sorteio<br/>2x x-burguer (sem cebola)<br/>1x coca-cola zero lata<br/>pagamento: pix"] --> L["LLM grande"]
-    L --> M["'me ve 2 xburguer sem cebola<br/>e uma coquinha zero, pago no pix'"]
+    L --> M["'me ve 2 xburguer sem cebola<br/>e uma coca zero lata, pago no pix'"]
     S --> R["Rótulo (JSON)<br/>já conhecido"]
     M --> P["Par de treino"]
     R --> P
