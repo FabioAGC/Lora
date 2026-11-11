@@ -1,0 +1,16 @@
+{
+  "nome": "base_sem_ajuste",
+  "modelo": "Qwen/Qwen2.5-0.5B-Instruct",
+  "adaptador": null,
+  "prompt": "longo",
+  "n": 200,
+  "json_valido": 0.0,
+  "pedido_exato": 0.0,
+  "itens_f1": 0.0,
+  "acc_pagamento": 0.0,
+  "acc_tipo": 0.0,
+  "acc_orcamento": 0.0,
+  "acc_troco_para": 0.0,
+  "tokens_prompt_medio": 883,
+  "segundos_por_pedido": 6.23
+}

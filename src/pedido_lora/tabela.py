@@ -11,7 +11,7 @@ ROTULOS = {
     "ing_b": "Ingrediente B (lr 5e-4)",
     "ing_c": "Ingrediente C (lr 1e-3)",
     "sopa_uniforme": "**Sopa uniforme (A+B+C)**",
-    "sopa_gulosa": "**Sopa gulosa**",
+    "sopa_gulosa": "**Sopa gulosa (escolheu só C)**",
     "llm_grande_api": "LLM grande via API (gpt-oss-120b, prompt longo)",
 }
 

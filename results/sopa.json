@@ -1,0 +1,38 @@
+{
+  "perda_validacao_ingredientes": {
+    "outputs/ing_a": 0.034,
+    "outputs/ing_b": 0.0147,
+    "outputs/ing_c": 0.0104
+  },
+  "perda_validacao_sopa_uniforme": 0.0141,
+  "sopa_gulosa": {
+    "escolhidos": [
+      "outputs/ing_c"
+    ],
+    "passos": [
+      {
+        "ingredientes": [
+          "outputs/ing_c"
+        ],
+        "perda": 0.0104,
+        "aceito": true
+      },
+      {
+        "ingredientes": [
+          "outputs/ing_c",
+          "outputs/ing_b"
+        ],
+        "perda": 0.0107,
+        "aceito": false
+      },
+      {
+        "ingredientes": [
+          "outputs/ing_c",
+          "outputs/ing_a"
+        ],
+        "perda": 0.0148,
+        "aceito": false
+      }
+    ]
+  }
+}

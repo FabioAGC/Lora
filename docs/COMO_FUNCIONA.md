@@ -123,3 +123,9 @@ flowchart TD
 
 O conjunto de teste (200 pedidos) nunca é usado no treino nem na escolha da sopa;
 a sopa gulosa decide com o conjunto de validação.
+
+## 6. O que aconteceu neste experimento
+
+Os resultados estão no [README](../README.md#resultados). Em resumo: o ajuste levou o
+modelo de 0% para 85% de pedidos exatos, e a sopa não superou o melhor ingrediente
+porque os três ficaram com qualidade muito desigual após uma única época de treino.

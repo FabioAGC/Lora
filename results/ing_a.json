@@ -1,0 +1,16 @@
+{
+  "nome": "ing_a",
+  "modelo": "Qwen/Qwen2.5-0.5B-Instruct",
+  "adaptador": "outputs/ing_a",
+  "prompt": "curto",
+  "n": 200,
+  "json_valido": 99.5,
+  "pedido_exato": 54.5,
+  "itens_f1": 80.0,
+  "acc_pagamento": 97.5,
+  "acc_tipo": 88.5,
+  "acc_orcamento": 98.5,
+  "acc_troco_para": 99.5,
+  "tokens_prompt_medio": 55,
+  "segundos_por_pedido": 1.67
+}
