@@ -51,6 +51,12 @@ conta gratuita da Groq com 188 exemplos novos, dos quais 94 são casos de borda;
 ./scripts/montar_dataset_v2.sh
 ```
 
+Já há uma divisão preliminar em `data/` (1.052 exemplos de treino e 399 de teste), que
+permite rodar o Kaggle agora. O teste tem só 22 casos de borda, de 2 a 5 por tipo, então
+os números dela servem para validar o pipeline e comparar tamanhos de modelo, não para
+concluir sobre cada tipo de caso de borda. Quando o dataset ficar completo, a divisão é
+refeita e o teste muda, então os resultados preliminares não são comparáveis com os finais.
+
 Os resultados abaixo são da versão 1 e ficam em `results/v1/`.
 
 ## Resultados da versão 1
