@@ -1,0 +1,32 @@
+# Treino com o Soup CLI (https://github.com/MakazhanAlpamys/Soup), em CPU.
+# Mesmos hiperparâmetros do melhor ingrediente treinado com o laço manual
+# (treinar.py), para os dois caminhos serem comparáveis.
+#
+#   pip install "soup-cli[train]"
+#   python -m pedido_lora.exportar_chat
+#   soup train --config soup.yaml
+base: Qwen/Qwen2.5-0.5B-Instruct
+task: sft
+
+data:
+  train: ./data/chat/treino.jsonl
+  format: chatml
+  val_split: 0.0
+  max_length: 320
+
+training:
+  epochs: 1
+  lr: 1e-3
+  batch_size: 8
+  gradient_accumulation_steps: 1
+  warmup_ratio: 0.06
+  scheduler: linear
+  seed: 3
+  quantization: none   # quantização em 4 bits exige GPU
+  lora:
+    r: 8
+    alpha: 16
+    dropout: 0.05
+    target_modules: [q_proj, k_proj, v_proj, o_proj]
+
+output: ./outputs/soup_cli
