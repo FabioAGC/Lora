@@ -1,7 +1,7 @@
 """Demonstração: extrai o pedido de uma mensagem digitada.
 
 Uso:
-    python -m pedido_lora.inferir --adaptador outputs/sopa_gulosa "2 xburguer sem cebola e uma coca zero, pago no pix"
+    python -m pedido_lora.inferir --adaptador outputs/soup_cli "2 xburguer sem cebola e uma coca zero, pago no pix"
 """
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from .prompts import PROMPT_CURTO
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("mensagem")
-    ap.add_argument("--adaptador", default="outputs/sopa_gulosa")
+    ap.add_argument("--adaptador", default="outputs/soup_cli")
     ap.add_argument("--modelo", default=MODELO_BASE)
     args = ap.parse_args()
 

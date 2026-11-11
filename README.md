@@ -1,4 +1,4 @@
-# Lora: extração de pedidos de delivery com LoRA e model soup
+# Lora: extração de pedidos de delivery com LoRA em CPU
 
 ![testes](https://github.com/FabioAGC/Lora/actions/workflows/ci.yml/badge.svg)
 
@@ -12,9 +12,15 @@ mensagens informais de delivery, em português, em pedidos estruturados:
    "pagamento":"pix","tipo":null,"orcamento":null,"troco_para":null}
 ```
 
-O projeto cobre o ciclo completo: geração de dados sintéticos, fine-tuning com LoRA,
-combinação de modelos por *model soup*, e avaliação contra o modelo base e contra um
-LLM grande via API.
+O projeto cobre o ciclo completo: geração de dados sintéticos, fine-tuning com LoRA e
+avaliação contra o modelo base e contra um LLM grande via API. O treino pode ser feito
+de dois jeitos, com resultados equivalentes:
+
+- com o [Soup CLI](https://github.com/MakazhanAlpamys/Soup), a partir do `soup.yaml`;
+- com um laço de treino escrito à mão (`treinar.py`), para quem quer ver cada passo.
+
+Há também um experimento secundário de *model soup* (média de pesos de vários adaptadores).
+Tudo roda sem GPU: os tempos abaixo são de uma máquina de 4 núcleos.
 
 Para uma explicação passo a passo com diagramas, veja [docs/COMO_FUNCIONA.md](docs/COMO_FUNCIONA.md).
 
@@ -22,24 +28,29 @@ Para uma explicação passo a passo com diagramas, veja [docs/COMO_FUNCIONA.md](
 
 Conjunto de teste com 200 pedidos, nunca vistos no treino nem na escolha da sopa.
 
-| Modelo | Pedido exato | F1 de itens | JSON válido | Tokens de prompt | s/pedido |
+| Modelo | Pedido exato | F1 de itens | JSON válido | Tokens de prompt | Treino |
 |---|---:|---:|---:|---:|---:|
-| Modelo base, sem ajuste (prompt longo) | 0.0% | 0.0% | 0.0% | 883 | 6.23 |
-| Ingrediente A (lr 2e-4) | 54.5% | 80.0% | 99.5% | 55 | 1.67 |
-| Ingrediente B (lr 5e-4) | 80.5% | 93.8% | 99.5% | 55 | 1.63 |
-| Ingrediente C (lr 1e-3) | 85.0% | 96.7% | 100.0% | 55 | 1.58 |
-| Sopa uniforme (A+B+C) | 83.0% | 94.7% | 100.0% | 55 | 1.67 |
-| Sopa gulosa (escolheu só C) | 85.0% | 96.7% | 100.0% | 55 | 1.71 |
-| LLM grande via API (gpt-oss-120b, prompt longo) | 90.0% | 97.8% | 100.0% | 848 | 0.74 |
+| Modelo base, sem ajuste (prompt longo) | 0,0% | 0,0% | 0,0% | 883 | — |
+| **Treino com Soup CLI (lr 1e-3)** | **84,5%** | 95,1% | 100% | 55 | 16 min |
+| Laço manual, ingrediente A (lr 2e-4) | 54,5% | 80,0% | 99,5% | 55 | 30 min |
+| Laço manual, ingrediente B (lr 5e-4) | 80,5% | 93,8% | 99,5% | 55 | 43 min |
+| Laço manual, ingrediente C (lr 1e-3) | **85,0%** | 96,7% | 100% | 55 | 37 min |
+| Sopa uniforme (A+B+C) | 83,0% | 94,7% | 100% | 55 | soma dos três |
+| Sopa gulosa (escolheu só C) | 85,0% | 96,7% | 100% | 55 | soma dos três |
+| LLM grande via API (gpt-oss-120b, prompt longo) | 90,0% | 97,8% | 100% | 848 | — |
 
 "Pedido exato" exige acertar todos os itens, quantidades, observações e os quatro campos.
-O tempo dos modelos locais é em 4 núcleos de CPU; o do LLM grande é a latência da API.
+A inferência local leva cerca de 1,7 s por pedido em 4 núcleos de CPU; a API responde em 0,7 s.
 
 ### O que os números dizem
 
 - **O fine-tuning é o que faz o modelo pequeno funcionar.** Sem ajuste, o modelo de
   0,5B não produz nenhum JSON no esquema, mesmo com o catálogo inteiro no prompt.
   Ajustado, chega a 85% de pedidos exatos com um prompt de uma frase.
+- **O Soup CLI e o laço manual chegam ao mesmo lugar.** Com os mesmos hiperparâmetros,
+  a diferença é de um pedido em 200 (84,5% contra 85,0%), dentro do ruído. O Soup treinou
+  em menos da metade do tempo (16 contra 37 minutos); parte dessa diferença pode vir de
+  o laço manual ter disputado CPU com outros processos durante a medição.
 - **O modelo ajustado fica 5 pontos abaixo do LLM grande usando 15 vezes menos tokens
   de prompt** (55 contra 848), e roda sem GPU e sem API.
 - **A sopa não superou o melhor ingrediente neste experimento.** A sopa uniforme ficou
@@ -76,11 +87,11 @@ O tempo dos modelos locais é em 4 núcleos de CPU; o do LLM grande é a latênc
 | 1 | `amostrador.py` | Sorteia pedidos estruturados a partir do catálogo. O rótulo nasce correto. |
 | 2 | `gerar_dados.py` | Um LLM grande (Groq) escreve a mensagem informal de cada pedido. |
 | 3 | `dividir.py` | Separa 1.200 exemplos de treino, 140 de validação e 200 de teste. |
-| 4 | `treinar.py` | LoRA (rank 8) nas projeções de atenção: 0,22% dos parâmetros. Laço de treino escrito à mão. |
+| 4 | `soup.yaml` ou `treinar.py` | LoRA (rank 8) nas projeções de atenção: 0,22% dos parâmetros. |
 | 5 | `sopa.py` | Sopa uniforme e sopa gulosa dos adaptadores. |
 | 6 | `avaliar.py`, `avaliar_api.py` | Métricas no conjunto de teste. |
 
-### A sopa de adaptadores LoRA
+### Experimento secundário: sopa de adaptadores LoRA
 
 Cada ingrediente altera um peso `W` em `ΔW = (alpha/r)·B·A`. A sopa é a média dos `ΔW`.
 Tirar a média de `A` e de `B` separadamente dá o resultado errado, porque
@@ -101,8 +112,20 @@ export PYTHONPATH=src
 pytest -q
 ```
 
-Os dados já estão em `data/`. Para treinar e avaliar (cerca de 30 a 40 minutos por
-ingrediente em 4 núcleos de CPU):
+Os dados já estão em `data/`. Para treinar com o Soup CLI (cerca de 16 minutos em
+4 núcleos de CPU) e avaliar:
+
+```bash
+pip install "soup-cli[train]"
+soup train --config soup.yaml --yes
+python -m pedido_lora.avaliar --nome soup_cli --adaptador outputs/soup_cli
+```
+
+Sem GPU, o Soup desliga a quantização e não usa o *layer streaming*, que é o recurso
+dele para placas de vídeo com pouca memória; o `soup.yaml` já está configurado para CPU.
+
+Para repetir o experimento de model soup com o laço manual (30 a 40 minutos por
+ingrediente):
 
 ```bash
 ./scripts/treinar_ingredientes.sh
@@ -112,7 +135,7 @@ ingrediente em 4 núcleos de CPU):
 Para testar uma mensagem:
 
 ```bash
-python -m pedido_lora.inferir "2 xburguer sem cebola e uma coca zero, pago no pix"
+python -m pedido_lora.inferir --adaptador outputs/soup_cli "2 xburguer sem cebola e uma coca zero, pago no pix"
 ```
 
 Para gerar um dataset novo ou avaliar o LLM grande, é preciso uma chave da Groq na

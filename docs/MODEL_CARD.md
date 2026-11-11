@@ -17,7 +17,8 @@ mensagens informais em português para JSON.
 ## Treino
 
 LoRA rank 8 em `q_proj`, `k_proj`, `v_proj`, `o_proj`; 1 época sobre 1.200 exemplos;
-AdamW, taxa de aprendizado 1e-3 com aquecimento e decaimento linear; treinado em CPU.
+AdamW, taxa de aprendizado 1e-3 com aquecimento e decaimento linear; treinado em CPU
+(16 minutos em 4 núcleos) com o [Soup CLI](https://github.com/MakazhanAlpamys/Soup).
 
 ## Dados
 
@@ -28,8 +29,8 @@ e as mensagens são escritas por LLMs (gpt-oss-120b e qwen3.8-27b, via Groq).
 
 | Métrica | Valor |
 |---|---:|
-| Pedido exato | 85,0% |
-| F1 de itens | 96,7% |
+| Pedido exato | 84,5% |
+| F1 de itens | 95,1% |
 | JSON válido | 100% |
 
 ## Limitações

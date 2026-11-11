@@ -15,7 +15,7 @@ def main() -> None:
 
     ap = argparse.ArgumentParser()
     ap.add_argument("--usuario", required=True)
-    ap.add_argument("--adaptador", default="outputs/sopa_gulosa")
+    ap.add_argument("--adaptador", default="outputs/soup_cli")
     args = ap.parse_args()
 
     api = HfApi()

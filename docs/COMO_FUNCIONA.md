@@ -9,6 +9,8 @@ O GitHub desenha os diagramas abaixo automaticamente.
 flowchart TD
     A["1. Sortear pedidos<br/>(amostrador.py)<br/>rótulo correto por construção"] --> B["2. LLM grande escreve a mensagem<br/>(gerar_dados.py, via Groq)<br/>gírias, erros de digitação, áudio"]
     B --> C["3. Dividir<br/>(dividir.py)<br/>1200 treino · 140 validação · 200 teste"]
+    C --> S0["4. Treinar com Soup CLI<br/>(soup.yaml)<br/>caminho principal, 16 min"]
+    S0 --> F
     C --> D1["4a. Treinar ingrediente A<br/>LoRA, lr 2e-4"]
     C --> D2["4b. Treinar ingrediente B<br/>LoRA, lr 5e-4"]
     C --> D3["4c. Treinar ingrediente C<br/>LoRA, lr 1e-3"]
@@ -127,5 +129,6 @@ a sopa gulosa decide com o conjunto de validação.
 ## 6. O que aconteceu neste experimento
 
 Os resultados estão no [README](../README.md#resultados). Em resumo: o ajuste levou o
-modelo de 0% para 85% de pedidos exatos, e a sopa não superou o melhor ingrediente
+modelo de 0% para 85% de pedidos exatos, o Soup CLI e o laço manual deram resultados
+equivalentes (84,5% e 85,0%), e a sopa não superou o melhor ingrediente
 porque os três ficaram com qualidade muito desigual após uma única época de treino.
