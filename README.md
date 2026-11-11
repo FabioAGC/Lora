@@ -121,6 +121,8 @@ soup train --config soup.yaml --yes
 python -m pedido_lora.avaliar --nome soup_cli --adaptador outputs/soup_cli
 ```
 
+Para treinar um modelo maior numa GPU gratuita, veja [kaggle/README.md](kaggle/README.md).
+
 Sem GPU, o Soup desliga a quantização e não usa o *layer streaming*, que é o recurso
 dele para placas de vídeo com pouca memória; o `soup.yaml` já está configurado para CPU.
 

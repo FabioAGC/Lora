@@ -23,7 +23,7 @@ def main() -> None:
 
     from peft import PeftModel
 
-    tok, modelo = carregar_base(args.modelo)
+    tok, modelo = carregar_base(args.modelo, usar_gpu=True)
     modelo = PeftModel.from_pretrained(modelo, args.adaptador).merge_and_unload()
     inicio = time.time()
     saida = gerar(tok, modelo, [montar_prompt(tok, PROMPT_CURTO, args.mensagem)])[0]

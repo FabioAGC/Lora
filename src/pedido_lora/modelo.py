@@ -9,12 +9,20 @@ from .dados import ler_jsonl  # noqa: F401  (reexportado)
 MODELO_BASE = "Qwen/Qwen2.5-0.5B-Instruct"
 
 
-def carregar_base(nome: str = MODELO_BASE):
+def carregar_base(nome: str = MODELO_BASE, usar_gpu: bool = False):
+    """Carrega tokenizador e modelo.
+
+    Com `usar_gpu=True` e uma GPU NVIDIA disponível, o modelo vai para a GPU em
+    float16. O treino manual (treinar.py) e a sopa continuam sempre em CPU.
+    """
     tok = AutoTokenizer.from_pretrained(nome)
     tok.padding_side = "left"  # necessário para gerar em lote com modelos causais
     if tok.pad_token is None:
         tok.pad_token = tok.eos_token
-    modelo = AutoModelForCausalLM.from_pretrained(nome, dtype=torch.float32)
+    gpu = usar_gpu and torch.cuda.is_available()
+    modelo = AutoModelForCausalLM.from_pretrained(nome, dtype=torch.float16 if gpu else torch.float32)
+    if gpu:
+        modelo = modelo.to("cuda")
     return tok, modelo
 
 
@@ -44,7 +52,7 @@ def gerar(tok, modelo, prompts: list[str], max_tokens: int = 200, lote: int = 8)
     saidas = [""] * len(prompts)
     for ini in range(0, len(ordem), lote):
         idx = ordem[ini : ini + lote]
-        enc = tok([prompts[i] for i in idx], return_tensors="pt", padding=True)
+        enc = tok([prompts[i] for i in idx], return_tensors="pt", padding=True).to(modelo.device)
         out = modelo.generate(**enc, max_new_tokens=max_tokens, do_sample=False,
                               pad_token_id=tok.pad_token_id)
         novos = out[:, enc["input_ids"].shape[1]:]

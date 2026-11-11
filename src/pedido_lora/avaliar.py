@@ -33,7 +33,7 @@ def main() -> None:
     ap.add_argument("--saida", type=Path, default=Path("results"))
     args = ap.parse_args()
 
-    tok, modelo = carregar_base(args.modelo)
+    tok, modelo = carregar_base(args.modelo, usar_gpu=True)
     if args.adaptador:
         from peft import PeftModel
         modelo = PeftModel.from_pretrained(modelo, args.adaptador).merge_and_unload()

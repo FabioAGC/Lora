@@ -1,0 +1,31 @@
+# Treino com o Soup CLI em GPU NVIDIA (por exemplo, a T4 gratuita do Kaggle).
+# Usa um modelo três vezes maior que o soup.yaml (1,5B em vez de 0,5B).
+# Veja kaggle/README.md para o passo a passo.
+#
+# Para testar o modelo de 7B, troque `base` por Qwen/Qwen2.5-7B-Instruct e
+# `quantization` por 4bit (QLoRA): em float16 ele não cabe nos 16 GB da T4.
+base: Qwen/Qwen2.5-1.5B-Instruct
+task: sft
+
+data:
+  train: ./data/chat/treino.jsonl
+  format: chatml
+  val_split: 0.0
+  max_length: 320
+
+training:
+  epochs: 1
+  lr: 1e-3
+  batch_size: 8
+  gradient_accumulation_steps: 1
+  warmup_ratio: 0.06
+  scheduler: linear
+  seed: 3
+  quantization: none
+  lora:
+    r: 8
+    alpha: 16
+    dropout: 0.05
+    target_modules: [q_proj, k_proj, v_proj, o_proj]
+
+output: ./outputs/soup_gpu
