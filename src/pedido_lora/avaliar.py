@@ -12,14 +12,15 @@ import time
 from pathlib import Path
 
 from .esquema import interpretar
-from .metricas import agregar, comparar
+from .metricas import agregar, agregar_por_grupo, comparar
 from .modelo import MODELO_BASE, carregar_base, gerar, ler_jsonl, montar_prompt
 from .prompts import PROMPT_CURTO, prompt_longo
 
 
 def pontuar(saidas: list[str], exemplos: list[dict]) -> dict:
     comparacoes = [comparar(interpretar(s), json.loads(ex["pedido"])) for s, ex in zip(saidas, exemplos)]
-    return agregar(comparacoes)
+    grupos = [ex.get("complicacao") for ex in exemplos]
+    return {**agregar(comparacoes), "por_tipo_de_caso": agregar_por_grupo(comparacoes, grupos)}
 
 
 def main() -> None:
@@ -29,14 +30,17 @@ def main() -> None:
     ap.add_argument("--prompt", choices=["curto", "longo"], default="curto")
     ap.add_argument("--teste", default="data/teste.jsonl")
     ap.add_argument("--modelo", default=MODELO_BASE)
+    ap.add_argument("--quant4", action="store_true", help="carrega o modelo base em 4 bits (GPU)")
     ap.add_argument("--limite", type=int, default=0)
     ap.add_argument("--saida", type=Path, default=Path("results"))
     args = ap.parse_args()
 
-    tok, modelo = carregar_base(args.modelo, usar_gpu=True)
+    tok, modelo = carregar_base(args.modelo, usar_gpu=True, quant4=args.quant4)
     if args.adaptador:
         from peft import PeftModel
-        modelo = PeftModel.from_pretrained(modelo, args.adaptador).merge_and_unload()
+        modelo = PeftModel.from_pretrained(modelo, args.adaptador)
+        if not args.quant4:  # mesclar num modelo em 4 bits perderia precisão
+            modelo = modelo.merge_and_unload()
 
     exemplos = ler_jsonl(args.teste)
     if args.limite:

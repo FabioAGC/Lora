@@ -19,7 +19,7 @@ import httpx
 from .dados import ler_jsonl
 from .esquema import interpretar
 from .gerar_dados import URL, _espera
-from .metricas import agregar, comparar
+from .metricas import agregar, agregar_por_grupo, comparar
 from .prompts import prompt_longo
 
 
@@ -64,6 +64,7 @@ def main() -> None:
     resultado = {
         "nome": args.nome, "modelo": args.modelo, "adaptador": None, "prompt": "longo",
         **agregar(comparacoes),
+        "por_tipo_de_caso": agregar_por_grupo(comparacoes, [ex.get("complicacao") for ex in exemplos]),
         "tokens_prompt_medio": round(tokens_prompt / len(exemplos)),
         "tokens_saida_medio": round(tokens_saida / len(exemplos)),
         "segundos_por_pedido": round(sum(latencias) / max(1, len(latencias)), 2),

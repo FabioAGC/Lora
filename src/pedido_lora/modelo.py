@@ -9,17 +9,27 @@ from .dados import ler_jsonl  # noqa: F401  (reexportado)
 MODELO_BASE = "Qwen/Qwen2.5-0.5B-Instruct"
 
 
-def carregar_base(nome: str = MODELO_BASE, usar_gpu: bool = False):
+def carregar_base(nome: str = MODELO_BASE, usar_gpu: bool = False, quant4: bool = False):
     """Carrega tokenizador e modelo.
 
     Com `usar_gpu=True` e uma GPU NVIDIA disponível, o modelo vai para a GPU em
-    float16. O treino manual (treinar.py) e a sopa continuam sempre em CPU.
+    float16. Com `quant4=True`, carrega em 4 bits (necessário para o modelo de 7B
+    caber nos 16 GB de uma T4). O treino manual (treinar.py) e a sopa continuam
+    sempre em CPU.
     """
     tok = AutoTokenizer.from_pretrained(nome)
     tok.padding_side = "left"  # necessário para gerar em lote com modelos causais
     if tok.pad_token is None:
         tok.pad_token = tok.eos_token
     gpu = usar_gpu and torch.cuda.is_available()
+    if quant4:
+        if not gpu:
+            raise SystemExit("o carregamento em 4 bits exige uma GPU NVIDIA")
+        from transformers import BitsAndBytesConfig
+
+        config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4",
+                                    bnb_4bit_compute_dtype=torch.float16, bnb_4bit_use_double_quant=True)
+        return tok, AutoModelForCausalLM.from_pretrained(nome, quantization_config=config, device_map={"": 0})
     modelo = AutoModelForCausalLM.from_pretrained(nome, dtype=torch.float16 if gpu else torch.float32)
     if gpu:
         modelo = modelo.to("cuda")
@@ -45,7 +55,7 @@ def montar_exemplo_treino(tok, sistema: str, mensagem: str, resposta: str) -> tu
 
 
 @torch.no_grad()
-def gerar(tok, modelo, prompts: list[str], max_tokens: int = 200, lote: int = 8) -> list[str]:
+def gerar(tok, modelo, prompts: list[str], max_tokens: int = 384, lote: int = 8) -> list[str]:
     """Geração gulosa em lote. Ordena por tamanho para desperdiçar menos padding."""
     modelo.eval()
     ordem = sorted(range(len(prompts)), key=lambda i: len(prompts[i]))

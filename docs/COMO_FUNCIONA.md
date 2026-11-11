@@ -40,6 +40,46 @@ flowchart LR
 O computador sorteia o pedido, então o rótulo já está certo. O LLM grande só faz o que
 sabe fazer bem: escrever como uma pessoa escreveria.
 
+### Casos de borda
+
+Metade dos exemplos novos traz uma complicação, sorteada junto com o pedido. A
+complicação muda a forma de escrever, mas o pedido final continua o sorteado, então o
+rótulo segue correto por construção:
+
+| Caso | O que o cliente faz | O que o modelo precisa entender |
+|---|---|---|
+| `corrige_qtd` | "quero 5 açaí... não, 3" | Vale a última quantidade |
+| `desiste_item` | "e um pudim... esquece o pudim" | O pudim sai do pedido |
+| `divide_item` | "2 esfihas... ah, mais uma esfiha" | Soma: 3 esfihas |
+| `pergunta_entrega` | "quanto tempo demora a entrega?" | Perguntar não é escolher entrega |
+| `troco_implicito` | "troco pra 50" | Pagamento em dinheiro |
+| `por_extenso` | "três coxinhas e dois sucos" | Quantidades escritas em palavras |
+| `papo` | conversa sobre o trânsito, com o pedido no meio | Ignorar o que não é pedido |
+| `grande` | 6 itens, ou 25 unidades de um item | Pedidos fora do comum |
+
+### Verificação
+
+O LLM que escreve as mensagens às vezes erra: cita "pix" num pedido sem pagamento, ou
+copia a instrução de estilo para dentro da mensagem. Na primeira versão do dataset, isso
+deixou cerca de 1 em cada 10 rótulos errado. Agora cada exemplo passa por duas checagens
+antes de entrar no dataset:
+
+```mermaid
+flowchart LR
+    G["Mensagem gerada"] --> R{"Regras de<br/>palavras-chave"}
+    R -- "falhou" --> X["Descartado<br/>(fica em data/rejeitados_*.jsonl)"]
+    R -- "passou" --> L{"LLM revisor<br/>vê mensagem e rótulo"}
+    L -- "não bate" --> X
+    L -- "bate" --> OK["Entra no dataset"]
+```
+
+O revisor recebe a mensagem **e** o rótulo e só responde se os dois batem. Ele não tenta
+extrair o pedido sozinho: se fizesse isso, descartaria justamente os casos difíceis em
+que ele próprio erraria, e o dataset ficaria fácil demais.
+
+Antes de usar o revisor, medi a qualidade dele em 31 exemplos do teste antigo cujo
+rótulo eu tinha conferido: ele detectou os 12 rótulos errados e aprovou os 19 corretos.
+
 ## 2. O que é LoRA
 
 Um modelo de linguagem é uma pilha de matrizes grandes de números (os pesos).

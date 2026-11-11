@@ -45,3 +45,14 @@ def agregar(comparacoes: list[dict[str, Any]]) -> dict[str, float]:
         "itens_f1": round(100 * f1, 1),
         **{f"acc_{c}": taxa(c) for c in CAMPOS_SIMPLES},
     }
+
+
+def agregar_por_grupo(comparacoes: list[dict[str, Any]], grupos: list[str | None]) -> dict[str, dict]:
+    """Métricas separadas por tipo de caso: "normal", "borda" (todos) e cada caso de borda."""
+    por_grupo: dict[str, list] = {}
+    for c, g in zip(comparacoes, grupos):
+        por_grupo.setdefault("normal" if g is None else "borda", []).append(c)
+        if g is not None:
+            por_grupo.setdefault(g, []).append(c)
+    return {g: {"n": len(cs), "pedido_exato": agregar(cs)["pedido_exato"]}
+            for g, cs in sorted(por_grupo.items())}

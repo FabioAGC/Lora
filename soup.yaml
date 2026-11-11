@@ -12,7 +12,7 @@ data:
   train: ./data/chat/treino.jsonl
   format: chatml
   val_split: 0.0
-  max_length: 320
+  max_length: 512
 
 training:
   epochs: 1

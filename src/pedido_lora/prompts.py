@@ -43,5 +43,20 @@ Regras obrigatórias:
 3. Se a linha trouxer "pagamento", "tipo" (entrega ou retirada), "orcamento" (valor máximo em reais que quer gastar) ou "troco_para" (nota em reais com que vai pagar), mencione-os de forma natural. NÃO mencione nenhum desses que não esteja na linha.
 4. Não copie os nomes do pedido ao pé da letra: varie como um cliente faria (ex.: "xburguer", "coquinha zero", "uma calabresa grande", "refri", números por extenso ou em dígitos), mas mantenha o que distingue o item (sabor, tamanho, lata ou 2 litros).
 5. Siga o estilo pedido. Não invente endereço, nome ou telefone.
+6. Se a linha trouxer "complicação", siga-a. Ela muda a forma como o cliente se expressa, mas o pedido FINAL que se entende da mensagem continua exatamente o da linha.
+7. Nunca comente o estilo nem a complicação dentro da mensagem: o cliente não sabe que existe uma instrução.
 
 Responda APENAS com um JSON no formato {"mensagens": ["...", "..."]}, com uma mensagem por pedido, na mesma ordem."""
+
+
+PROMPT_VERIFICADOR = """Você revisa um dataset de pedidos de delivery. Cada linha traz uma mensagem de cliente e o pedido final que deveria ser entendido dela.
+
+Para cada linha, responda se a mensagem leva EXATAMENTE a esse pedido final. Confira:
+- os mesmos itens, com as quantidades finais (correções e desistências na mensagem valem; o que vale é o que o cliente quer no fim);
+- as observações de cada item, no item certo;
+- pagamento, tipo (entrega ou retirada), orçamento e troco: se o pedido diz "não informado", a mensagem não pode escolher esse campo; se o pedido tem um valor, a mensagem precisa permitir entendê-lo. Perguntar sobre a entrega não é escolher entrega. Falar em troco permite entender pagamento em dinheiro.
+
+Variações de escrita, gírias e erros de digitação são aceitáveis quando o item ainda é reconhecível.
+Rejeite também mensagens que comentam a própria forma de escrever ou parecem seguir uma instrução (por exemplo, "vou escrever sem acento" ou "pode ficar simpático").
+
+Responda APENAS com JSON listando só as linhas que NÃO batem: {"rejeitados": [{"n": 3, "motivo": "..."}]}. Em "motivo", explique em poucas palavras o que não bate. Se todas baterem, responda {"rejeitados": []}."""

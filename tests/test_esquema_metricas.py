@@ -1,10 +1,10 @@
 import json
 import random
 
-from pedido_lora.amostrador import sortear_pedido
+from pedido_lora.amostrador import sortear_complicacao, sortear_pedido
 from pedido_lora.catalogo import CATEGORIA_DO_ITEM, TODAS_OBS, obs_do_item
 from pedido_lora.esquema import interpretar, serializar
-from pedido_lora.metricas import agregar, comparar
+from pedido_lora.metricas import agregar, agregar_por_grupo, comparar
 
 PEDIDO = {"itens": [{"item": "x-burguer", "qtd": 2, "obs": ["sem tomate", "sem cebola"]},
                     {"item": "coca-cola lata", "qtd": 1, "obs": []}],
@@ -63,3 +63,28 @@ def test_amostrador_gera_pedidos_validos_e_reprodutiveis():
             assert set(i["obs"]) <= set(obs_do_item(i["item"])) <= TODAS_OBS
             assert not {"bem passado", "mal passado"} <= set(i["obs"])
         assert p["troco_para"] is None or p["pagamento"] == "dinheiro"
+
+
+def test_agregar_por_grupo():
+    cs = [comparar(PEDIDO, PEDIDO), comparar(None, PEDIDO), comparar(PEDIDO, PEDIDO)]
+    r = agregar_por_grupo(cs, [None, "papo", "papo"])
+    assert r["normal"] == {"n": 1, "pedido_exato": 100.0}
+    assert r["borda"] == r["papo"] == {"n": 2, "pedido_exato": 50.0}
+
+
+def test_casos_de_borda_nao_mudam_o_rotulo():
+    rng = random.Random(1)
+    for _ in range(500):
+        grande = rng.random() < 0.3
+        p = sortear_pedido(rng, grande=grande)
+        assert interpretar(serializar(p)) == json.loads(serializar(p))
+        if grande:
+            assert len(p["itens"]) >= 5 or p["itens"][0]["qtd"] >= 10
+        nome, instrucao = sortear_complicacao(rng, p)
+        itens = {i["item"] for i in p["itens"]}
+        if nome == "desiste_item":
+            assert not any(f"pede {n} " in instrucao + " " for n in itens)
+        if nome == "pergunta_entrega":
+            assert p["tipo"] is None
+        if nome == "troco_implicito":
+            assert p["pagamento"] == "dinheiro" and p["troco_para"]
