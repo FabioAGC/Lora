@@ -43,8 +43,10 @@ def main() -> None:
     casos = sorted({g for r in resultados.values() for g in r.get("por_tipo_de_caso", {})}
                    - {"normal", "borda"})
     if casos:
-        linhas += ["", "Pedido exato por tipo de caso de borda:", "",
-                   "| Modelo | " + " | ".join(casos) + " |",
+        n_por_caso = {c: max(r.get("por_tipo_de_caso", {}).get(c, {}).get("n", 0)
+                             for r in resultados.values()) for c in casos}
+        linhas += ["", "Pedido exato por tipo de caso de borda (n = exemplos no teste):", "",
+                   "| Modelo | " + " | ".join(f"{c} (n={n_por_caso[c]})" for c in casos) + " |",
                    "|---|" + "---:|" * len(casos)]
         for nome in ordem:
             grupos = resultados[nome].get("por_tipo_de_caso", {})
