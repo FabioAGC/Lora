@@ -79,8 +79,26 @@ output: ./outputs/{r.nome}
 
 
 def rodar(comando: list[str]) -> None:
+    """Roda um comando mostrando a saída ao vivo. Se falhar, repete as últimas
+    linhas num bloco destacado e encerra sem o traceback deste script, que só
+    esconderia o erro verdadeiro."""
     print("$", " ".join(comando), flush=True)
-    subprocess.run(comando, check=True)
+    ultimas: list[str] = []
+    processo = subprocess.Popen(comando, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                text=True, errors="replace")
+    for linha in processo.stdout:
+        print(linha, end="", flush=True)
+        if linha.strip() and "it/s]" not in linha and "s/it]" not in linha:
+            ultimas = (ultimas + [linha.rstrip()])[-60:]
+    if processo.wait() != 0:
+        print("\n" + "=" * 70)
+        print(f"FALHOU (código {processo.returncode}): {' '.join(comando)}")
+        print("Últimas linhas da saída. Copie este bloco inteiro ao pedir ajuda:")
+        print("=" * 70)
+        print("\n".join(ultimas))
+        print("=" * 70)
+        subprocess.run(["soup", "doctor"], check=False)
+        raise SystemExit(1)
 
 
 def limpar_cache(base: str) -> None:
