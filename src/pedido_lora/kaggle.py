@@ -36,16 +36,36 @@ class Receita:
 
 
 # Taxas de aprendizado menores para modelos maiores, como é comum em LoRA.
+# Lote menor com mais acumulação nos modelos maiores: o lote efetivo é sempre 8,
+# mas a memória de GPU por passo cai (o Soup recusa treinos que prevê não caberem).
 # O 7B só cabe nos 16 GB da T4 quantizado em 4 bits (QLoRA).
 RECEITAS = {
     "0.5b": Receita("qwen_0.5b", "Qwen/Qwen2.5-0.5B-Instruct", 1e-3, 8, 8, 1, False, 10),
-    "1.5b": Receita("qwen_1.5b", "Qwen/Qwen2.5-1.5B-Instruct", 5e-4, 16, 8, 1, False, 25),
-    "3b": Receita("qwen_3b", "Qwen/Qwen2.5-3B-Instruct", 3e-4, 16, 4, 2, False, 50),
-    "7b": Receita("qwen_7b_qlora", "Qwen/Qwen2.5-7B-Instruct", 2e-4, 16, 4, 2, True, 150),
+    "1.5b": Receita("qwen_1.5b", "Qwen/Qwen2.5-1.5B-Instruct", 5e-4, 16, 4, 2, False, 25),
+    "3b": Receita("qwen_3b", "Qwen/Qwen2.5-3B-Instruct", 3e-4, 16, 2, 4, False, 50),
+    "7b": Receita("qwen_7b_qlora", "Qwen/Qwen2.5-7B-Instruct", 2e-4, 16, 2, 4, True, 150),
 }
 
 
-def escrever_config(r: Receita, epocas: int, saida: Path) -> Path:
+def comprimento_maximo(base: str) -> int:
+    """Maior exemplo de treino, em tokens, arredondado para cima com folga.
+
+    O Soup reserva memória para `max_length` inteiro. Com 512, ele previa 15 GB
+    para o modelo de 0,5B e recusava o treino numa T4, embora nenhum exemplo
+    passe de 230 tokens.
+    """
+    from transformers import AutoTokenizer
+
+    tok = AutoTokenizer.from_pretrained(base)
+    maior = 0
+    with open("data/chat/treino.jsonl", encoding="utf-8") as f:
+        for linha in f:
+            ids = tok.apply_chat_template(json.loads(linha)["messages"], tokenize=True)
+            maior = max(maior, len(ids["input_ids"] if hasattr(ids, "keys") else ids))
+    return max(64, -(-(maior + 16) // 32) * 32)
+
+
+def escrever_config(r: Receita, epocas: int, saida: Path, max_length: int) -> Path:
     config = f"""# Gerado por pedido_lora.kaggle para {r.base}
 base: {r.base}
 task: sft
@@ -54,7 +74,7 @@ data:
   train: ./data/chat/treino.jsonl
   format: chatml
   val_split: 0.0
-  max_length: 512
+  max_length: {max_length}
 
 training:
   epochs: {epocas}
@@ -78,10 +98,12 @@ output: ./outputs/{r.nome}
     return caminho
 
 
-def rodar(comando: list[str]) -> None:
-    """Roda um comando mostrando a saída ao vivo. Se falhar, repete as últimas
-    linhas num bloco destacado e encerra sem o traceback deste script, que só
-    esconderia o erro verdadeiro."""
+def rodar(comando: list[str], fatal: bool = True) -> tuple[int, list[str]]:
+    """Roda um comando mostrando a saída ao vivo e devolve (código, últimas linhas).
+
+    Se falhar e `fatal` for True, repete as últimas linhas num bloco destacado e
+    encerra sem o traceback deste script, que só esconderia o erro verdadeiro.
+    """
     print("$", " ".join(comando), flush=True)
     ultimas: list[str] = []
     processo = subprocess.Popen(comando, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -90,15 +112,32 @@ def rodar(comando: list[str]) -> None:
         print(linha, end="", flush=True)
         if linha.strip() and "it/s]" not in linha and "s/it]" not in linha:
             ultimas = (ultimas + [linha.rstrip()])[-60:]
-    if processo.wait() != 0:
+    codigo = processo.wait()
+    if codigo != 0 and fatal:
         print("\n" + "=" * 70)
-        print(f"FALHOU (código {processo.returncode}): {' '.join(comando)}")
+        print(f"FALHOU (código {codigo}): {' '.join(comando)}")
         print("Últimas linhas da saída. Copie este bloco inteiro ao pedir ajuda:")
         print("=" * 70)
         print("\n".join(ultimas))
         print("=" * 70)
         subprocess.run(["soup", "doctor"], check=False)
         raise SystemExit(1)
+    return codigo, ultimas
+
+
+def treinar(config: Path) -> None:
+    """Treina com o Soup. Se ele recusar por PREVISÃO de falta de memória, tenta
+    de novo ignorando a previsão: ela é conservadora, e uma falta de memória real
+    apenas interrompe o treino com erro, sem outro prejuízo."""
+    comando = ["soup", "train", "--config", str(config), "--yes"]
+    codigo, ultimas = rodar(comando, fatal=False)
+    if codigo == 0:
+        return
+    if any("Hardware-fit gate" in linha for linha in ultimas):
+        print("\nO Soup previu falta de memória. Tentando mesmo assim...\n", flush=True)
+        rodar(comando + ["--allow-oom-attempt"])
+    else:
+        rodar(comando)  # repete para mostrar o bloco de erro e encerrar
 
 
 def limpar_cache(base: str) -> None:
@@ -132,12 +171,12 @@ def main() -> None:
         if Path(f"results/{r.nome}.json").exists() and not args.teste_rapido:
             print(f"{r.nome}: já avaliado, pulando")
             continue
-        config = escrever_config(r, args.epocas, configs)
+        config = escrever_config(r, args.epocas, configs, comprimento_maximo(r.base))
         inicio = time.time()
         if args.teste_rapido:
             rodar(["soup", "train", "--config", str(config), "--dry-run"])
             continue
-        rodar(["soup", "train", "--config", str(config), "--yes"])
+        treinar(config)
         minutos_treino = (time.time() - inicio) / 60
         avaliar = [sys.executable, "-m", "pedido_lora.avaliar", "--nome", r.nome,
                    "--modelo", r.base, "--adaptador", f"outputs/{r.nome}"]
