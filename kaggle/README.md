@@ -50,6 +50,14 @@ desde que você copie a pasta `results/` de uma para a outra.
 - Escreva e teste o código com o acelerador desligado (`None`) e ligue a GPU só para treinar.
 - Prefira a T4 à P100: versões recentes do PyTorch deixaram de suportar a arquitetura da P100.
 
+## Problemas já encontrados
+
+| Mensagem | Causa | Solução |
+|---|---|---|
+| `Hardware-fit gate ... exceeds 15.6 GB` | O Soup prevê a memória pelo `max_length` configurado | Já corrigido: o pipeline mede o comprimento nos dados |
+| `peft refuses to load with the preinstalled torchao` | O Kaggle traz um `torchao` antigo | A célula de instalação já remove o `torchao` |
+| Pasta `/kaggle/working/Lora/Lora` | Célula de instalação rodada duas vezes numa versão antiga do notebook | A célula atual pode ser repetida à vontade |
+
 ## Arquivos
 
 | Arquivo | O que é |
