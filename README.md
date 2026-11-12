@@ -43,19 +43,20 @@ isso e amplia o teste:
   numa GPU T4 gratuita do Kaggle, o de 7B com QLoRA em 4 bits.
   Veja [kaggle/README.md](kaggle/README.md).
 
-**Estado:** o dataset v2 está incompleto. A geração parou no limite diário de tokens da
-conta gratuita da Groq com 188 exemplos novos, dos quais 94 são casos de borda; a meta
-é 1.700. O script retoma de onde parou:
+**Estado:** o dataset v2 tem 2.583 exemplos verificados: 1.413 da versão 1 e 1.170
+novos, dos quais 582 são casos de borda. A meta de 1.700 novos ainda não foi atingida,
+porque a geração para no limite diário de tokens da conta gratuita da Groq. O script
+retoma de onde parou:
 
 ```bash
 ./scripts/montar_dataset_v2.sh
 ```
 
-Já há uma divisão preliminar em `data/` (1.052 exemplos de treino e 399 de teste), que
-permite rodar o Kaggle agora. O teste tem só 22 casos de borda, de 2 a 5 por tipo, então
-os números dela servem para validar o pipeline e comparar tamanhos de modelo, não para
-concluir sobre cada tipo de caso de borda. Quando o dataset ficar completo, a divisão é
-refeita e o teste muda, então os resultados preliminares não são comparáveis com os finais.
+A divisão atual tem 2.033 exemplos de treino (458 de borda), 150 de validação e 400 de
+teste (90 de borda). Cada vez que o dataset cresce, a divisão é refeita e o teste muda,
+então resultados obtidos com divisões diferentes não são comparáveis entre si. O tipo
+`troco_implicito` tem só 8 exemplos no total, porque depende de um pedido pago em
+dinheiro com troco.
 
 Os resultados abaixo são da versão 1 e ficam em `results/v1/`.
 
