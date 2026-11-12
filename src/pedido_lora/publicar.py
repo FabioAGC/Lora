@@ -16,10 +16,11 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--usuario", required=True)
     ap.add_argument("--adaptador", default="outputs/soup_cli")
+    ap.add_argument("--nome", default="pedido-delivery-ptbr-lora", help="nome do repositório do modelo")
     args = ap.parse_args()
 
     api = HfApi()
-    modelo = f"{args.usuario}/pedido-delivery-ptbr-lora"
+    modelo = f"{args.usuario}/{args.nome}"
     dados = f"{args.usuario}/pedidos-delivery-ptbr"
     api.create_repo(modelo, exist_ok=True)
     api.upload_folder(folder_path=args.adaptador, repo_id=modelo)
